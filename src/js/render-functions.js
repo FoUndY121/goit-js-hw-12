@@ -1,4 +1,19 @@
-export const createMarkup = images => {
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
+
+const gallery = document.querySelector('.gallery');
+
+let lightbox = new SimpleLightbox('.gallery a', {
+  captions: true,
+  captionsData: 'alt',
+  captionDelay: 250,
+});
+
+/**
+ * @param {Array} images
+ * @returns {string}
+ */
+export function createMarkup(images) {
   return images
     .map(
       ({
@@ -23,4 +38,34 @@ export const createMarkup = images => {
       </li>`
     )
     .join('');
-};
+}
+
+
+export function clearGallery() {
+  gallery.innerHTML = '';
+}
+
+/**
+ * @param {Array} images
+ * @param {boolean} isNewSearch
+ */
+export function renderGallery(images, isNewSearch = false) {
+  if (isNewSearch) {
+    clearGallery();
+  }
+  gallery.insertAdjacentHTML('beforeend', createMarkup(images));
+  refreshLightbox();
+}
+
+
+export function refreshLightbox() {
+  lightbox.refresh();
+}
+
+
+export function scrollToNewImages() {
+  const lastItem = gallery.lastElementChild;
+  if (lastItem) {
+    lastItem.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+}

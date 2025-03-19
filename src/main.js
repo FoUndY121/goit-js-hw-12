@@ -1,6 +1,5 @@
 import iziToast from 'izitoast';
-import SimpleLightbox from 'simplelightbox';
-import { createMarkup } from './js/render-functions';
+import { createMarkup, refreshLightbox, scrollToNewImages } from './js/render-functions';
 import { getPictures } from './js/pixabay-api';
 import { randomizeGalleryItems } from './js/gallery-randomizer';
 
@@ -12,7 +11,6 @@ const btnLoadMore = document.querySelector('.btn2');
 let page = 1;
 let query = '';
 const perPage = 15;
-let isScrolling = false;
 
 loader.style.display = 'none';
 btnLoadMore.classList.add('is-hidden');
@@ -23,22 +21,6 @@ function showLoader() {
 
 function hideLoader() {
   loader.style.display = 'none';
-}
-
-function scrollByTwoRows() {
-  const firstItem = document.querySelector('.gallery-item');
-  if (firstItem && !isScrolling) {
-    const itemHeight = firstItem.getBoundingClientRect().height;
-    isScrolling = true;
-    window.scrollBy({
-      top: 2 * itemHeight,
-      behavior: 'smooth',
-    });
-
-    setTimeout(() => {
-      isScrolling = false;
-    }, 500);
-  }
 }
 
 async function onSearch(event) {
@@ -67,21 +49,14 @@ async function onSearch(event) {
     if (!data.hits.length) {
       iziToast.error({
         title: 'Error',
-        message:
-          'Sorry, there are no images matching your search query. Please try again!',
+        message: 'Sorry, there are no images matching your search query. Please try again!',
       });
       return;
     }
 
     listImages.innerHTML = createMarkup(data.hits);
     randomizeGalleryItems();
-
-    const lightbox = new SimpleLightbox('.gallery a', {
-      captions: true,
-      captionsData: 'alt',
-      captionDelay: 250,
-    });
-    lightbox.refresh();
+    refreshLightbox();
 
     if (data.totalHits > page * perPage) {
       btnLoadMore.classList.remove('is-hidden');
@@ -94,7 +69,7 @@ async function onSearch(event) {
   }
 }
 
-async function onLoadMore(event) {
+async function onLoadMore() {
   showLoader();
   page++;
 
@@ -113,24 +88,13 @@ async function onLoadMore(event) {
 
     listImages.insertAdjacentHTML('beforeend', createMarkup(data.hits));
     randomizeGalleryItems();
-
-    const lightbox = new SimpleLightbox('.gallery a', {
-      captions: true,
-      captionsData: 'alt',
-      captionDelay: 250,
-    });
-    lightbox.refresh();
+    refreshLightbox();
+    scrollToNewImages(); // Прокрутка к загруженным изображениям
   } catch (error) {
     hideLoader();
     iziToast.error({ title: 'Error', message: error.message });
   }
 }
-
-window.addEventListener('wheel', event => {
-  if (event.deltaY > 0) {
-    scrollByTwoRows();
-  }
-});
 
 formSearch.addEventListener('submit', onSearch);
 btnLoadMore.addEventListener('click', onLoadMore);
